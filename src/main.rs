@@ -8,7 +8,6 @@ use std::io::Write;
 use std::path::Path;
 use std::env;
 
-// Funciones relacionadas con el reemplazo de URLs locales en el contenido HTML
 fn replace_local_urls(html_content: &str) -> String {
     let css_re = Regex::new(r#"href="(/_themes/[^"]+)""#).unwrap();
     let js_re = Regex::new(r#"src="(/_themes/[^"]+)""#).unwrap();
@@ -34,7 +33,6 @@ fn wrap_html(content: &str) -> String {
     )
 }
 
-// Funciones relacionadas con la conversión y extracción de URLs
 fn convert_course_url(url: &str) -> Option<(String, String)> {
     let re = Regex::new(r"https://learn\.microsoft\.com/([^/]+)/training/courses/([^/]+)").unwrap();
     re.captures(url).map(|caps| {
@@ -66,7 +64,6 @@ fn transform_module_url(url: &str) -> Option<String> {
     })
 }
 
-// Funciones relacionadas con la obtención de datos de los cursos y unidades
 async fn fetch_course_data(url: &str) -> Result<Value, Box<dyn Error>> {
     let response = reqwest::get(url).await?.text().await?;
     let json: Value = serde_json::from_str(&response)?;
@@ -95,13 +92,11 @@ fn extract_units(json: &Value, locale: &str) -> Vec<(String, String)> {
         .collect::<Vec<_>>()
 }
 
-// Función para obtener contenido HTML
 async fn fetch_html(url: &str) -> Result<String, Box<dyn Error>> {
     let response = reqwest::get(url).await?.text().await?;
     Ok(replace_local_urls(&response))
 }
 
-// Función principal que coordina todo el proceso
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
