@@ -39,8 +39,8 @@ Compilation
 -----
 1. Clone the repository:
 ```
-git clone https://github.com/tu_usuario/learn-microsoft-courses-to-pdf.git
-cd learn-microsoft-courses-to-pdf
+git clone https://github.com/edgarburgues/ml2pdf.git
+cd ml2pdf
 ```
 2. Install dependencies:
 ```
