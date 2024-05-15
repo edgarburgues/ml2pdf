@@ -13,7 +13,7 @@ jobs:
   build:
 
     runs-on: ${{ matrix.os }}
-
+    
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -25,11 +25,34 @@ jobs:
       with:
         toolchain: stable
     - name: Build
-      run: cargo build --release 
+      run: cargo build --release --verbose
+    - name: Run tests
+      run: cargo test --release --verbose
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.os == 'windows-latest' && 'ml2pdf-windows' || 'ml2pdf-linux' }}
+        path: ${{ matrix.os == 'windows-latest' && 'target/release/ml2pdf.exe' || 'target/release/ml2pdf' }}
 
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: ml2pdf-windows
+        path: ./artifacts
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: ml2pdf-linux
+        path: ./artifacts
 
     - name: Create Release
-      if: github.event_name == 'push'
       id: create_release
       uses: actions/create-release@v1
       env:
@@ -40,13 +63,22 @@ jobs:
         draft: false
         prerelease: false
 
-    - name: Upload Release Asset
-      if: github.event_name == 'push'
+    - name: Upload Windows Release Asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ${{ matrix.os == 'windows-latest' && 'target/release/ml2pdf.exe' || 'target/release/ml2pdf' }}
-        asset_name: ${{ matrix.os == 'windows-latest' && 'ml2pdf.exe' || 'ml2pdf' }}
+        asset_path: ./artifacts/target/release/ml2pdf.exe
+        asset_name: ml2pdf.exe
+        asset_content_type: application/octet-stream
+
+    - name: Upload Linux Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./artifacts/target/release/ml2pdf
+        asset_name: ml2pdf
         asset_content_type: application/octet-stream
