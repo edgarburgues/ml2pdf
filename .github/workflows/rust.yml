@@ -21,8 +21,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Rust stable
-      uses: actions-rs/toolchain@v1
+      uses: actions-rs/toolchain@v2
       with:
+        profile: minimal
         toolchain: stable
     - name: Build
       run: cargo build --release --verbose
@@ -41,12 +42,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Download artifacts
+    - name: Download Windows artifact
       uses: actions/download-artifact@v3
       with:
         name: ml2pdf-windows
         path: ./artifacts
-    - name: Download artifacts
+    - name: Download Linux artifact
       uses: actions/download-artifact@v3
       with:
         name: ml2pdf-linux
@@ -69,7 +70,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./artifacts/target/release/ml2pdf.exe
+        asset_path: ./artifacts/ml2pdf-windows/ml2pdf.exe
         asset_name: ml2pdf.exe
         asset_content_type: application/octet-stream
 
@@ -79,6 +80,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./artifacts/target/release/ml2pdf
+        asset_path: ./artifacts/ml2pdf-linux/ml2pdf
         asset_name: ml2pdf
         asset_content_type: application/octet-stream
