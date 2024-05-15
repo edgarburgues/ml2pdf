@@ -16,20 +16,27 @@ jobs:
     - name: Check out the repository
       uses: actions/checkout@v2
 
-    - name: Set up Rust
+    - name: Install Rust toolchain
+      run: rustup target add x86_64-pc-windows-gnu
+
+    - name: Set up Rust toolchain
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
+        target: x86_64-pc-windows-gnu
         override: true
 
+    - name: Install mingw
+      run: sudo apt-get install mingw-w64 -y
+
     - name: Build the project
-      run: cargo build --release
+      run: cargo build --release --target x86_64-pc-windows-gnu
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
-        name: ml2pdf.exe
-        path: target/release/ml2pdf.exe
+        name: rust-app
+        path: target/x86_64-pc-windows-gnu/release/ml2pdf.exe
 
   publish:
     runs-on: ubuntu-latest
@@ -40,7 +47,7 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: rust-app
-        path: target/release
+        path: target/x86_64-pc-windows-gnu/release
 
     - name: Publish release
       id: create_release
@@ -59,6 +66,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: target/release/ml2pdf.exe
+        asset_path: target/x86_64-pc-windows-gnu/release/ml2pdf.exe
         asset_name: ml2pdf.exe
         asset_content_type: application/octet-stream
