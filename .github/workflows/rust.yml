@@ -1,85 +1,64 @@
-name: Rust
+name: Rust Build and Publish
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
-
-env:
-  CARGO_TERM_COLOR: always
+    branches:
+      - main
 
 jobs:
   build:
-
-    runs-on: ${{ matrix.os }}
-    
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Rust stable
-      uses: actions-rs/toolchain@v2
-      with:
-        profile: minimal
-        toolchain: stable
-    - name: Build
-      run: cargo build --release --verbose
-    - name: Run tests
-      run: cargo test --release --verbose
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{ matrix.os == 'windows-latest' && 'ml2pdf-windows' || 'ml2pdf-linux' }}
-        path: ${{ matrix.os == 'windows-latest' && 'target/release/ml2pdf.exe' || 'target/release/ml2pdf' }}
+    - name: Check out the repository
+      uses: actions/checkout@v2
 
-  release:
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+
+    - name: Build the project
+      run: cargo build --release
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: rust-app
+        path: target/release/your_app_name.exe
+
+  publish:
     runs-on: ubuntu-latest
     needs: build
 
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Download Windows artifact
-      uses: actions/download-artifact@v3
+    - name: Download artifact
+      uses: actions/download-artifact@v2
       with:
-        name: ml2pdf-windows
-        path: ./artifacts
-    - name: Download Linux artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: ml2pdf-linux
-        path: ./artifacts
+        name: rust-app
+        path: target/release
 
-    - name: Create Release
+    - name: Publish release
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v${{ github.run_number }}
-        release_name: Release ${{ github.run_number }}
+        tag_name: ${{ github.sha }}
+        release_name: Release ${{ github.sha }}
         draft: false
         prerelease: false
 
-    - name: Upload Windows Release Asset
+    - name: Upload exe to release
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./artifacts/ml2pdf-windows/ml2pdf.exe
-        asset_name: ml2pdf.exe
-        asset_content_type: application/octet-stream
-
-    - name: Upload Linux Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./artifacts/ml2pdf-linux/ml2pdf
-        asset_name: ml2pdf
+        asset_path: target/release/your_app_name.exe
+        asset_name: your_app_name.exe
         asset_content_type: application/octet-stream
