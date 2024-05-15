@@ -18,7 +18,7 @@ Features
 Usage
 -----
 
-Windows users can download the compiled version from the [Releases](https://github.com/tu_usuario/learn-microsoft-courses-to-pdf/releases) section and run the program with the following command:
+Windows users can download the compiled version from the [Releases](https://github.com/edgarburgues/ml2pdf/releases) section and run the program with the following command:
 
 ```sh
 ml2pdf.exe url_of_the_course
