@@ -49,14 +49,18 @@ jobs:
         name: rust-app
         path: target/x86_64-pc-windows-gnu/release
 
+    - name: Get current date
+      id: get_date
+      run: echo "DATE=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+
     - name: Publish release
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.sha }}
-        release_name: Release ${{ github.sha }}
+        tag_name: v${{ env.DATE }}
+        release_name: Release ${{ env.DATE }}
         draft: false
         prerelease: false
 
