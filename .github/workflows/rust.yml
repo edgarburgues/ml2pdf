@@ -28,8 +28,8 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
-        name: rust-app
-        path: target/release/your_app_name.exe
+        name: ml2pdf.exe
+        path: target/release/ml2pdf.exe
 
   publish:
     runs-on: ubuntu-latest
