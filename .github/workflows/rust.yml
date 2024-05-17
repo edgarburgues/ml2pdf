@@ -42,6 +42,15 @@ jobs:
       if: matrix.target == 'x86_64-pc-windows-gnu'
       run: sudo apt-get install mingw-w64 -y
 
+    - name: Install dependencies for Linux target
+      if: matrix.target == 'x86_64-unknown-linux-musl'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pkg-config libssl-dev musl-tools
+        export OPENSSL_DIR=/usr/include/openssl
+        export PKG_CONFIG_SYSROOT_DIR=/usr
+        export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
+
     - name: Build the project
       run: cargo build --release --target ${{ matrix.target }}
 
