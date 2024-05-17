@@ -1,4 +1,4 @@
-name: Rust Build and Publish
+name: Rust Build, Test, and Publish
 
 on:
   push:
@@ -7,36 +7,63 @@ on:
   pull_request:
     branches:
       - main
+  release:
+    types: [created]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-gnu
+            archive: zip
+          - target: x86_64-unknown-linux-musl
+            archive: tar.gz tar.xz tar.zst
+          - target: x86_64-apple-darwin
+            archive: zip
 
     steps:
     - name: Check out the repository
       uses: actions/checkout@v2
 
     - name: Install Rust toolchain
-      run: rustup target add x86_64-pc-windows-gnu
+      run: rustup target add ${{ matrix.target }}
 
     - name: Set up Rust toolchain
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-        target: x86_64-pc-windows-gnu
+        target: ${{ matrix.target }}
         override: true
 
-    - name: Install mingw
+    - name: Install dependencies for Windows target
+      if: matrix.target == 'x86_64-pc-windows-gnu'
       run: sudo apt-get install mingw-w64 -y
 
     - name: Build the project
-      run: cargo build --release --target x86_64-pc-windows-gnu
+      run: cargo build --release --target ${{ matrix.target }}
+
+    - name: Run tests
+      run: cargo test --release --target ${{ matrix.target }}
+
+    - name: Package the build
+      run: |
+        mkdir -p dist
+        if [ "${{ matrix.archive }}" == "zip" ]; then
+          zip -j dist/ml2pdf-${{ matrix.target }}.zip target/${{ matrix.target }}/release/ml2pdf*
+        else
+          tar -czvf dist/ml2pdf-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ml2pdf*
+        fi
+      with:
+        working-directory: .
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
-        name: rust-app
-        path: target/x86_64-pc-windows-gnu/release/ml2pdf.exe
+        name: rust-app-${{ matrix.target }}
+        path: dist/
 
   publish:
     runs-on: ubuntu-latest
@@ -46,8 +73,8 @@ jobs:
     - name: Download artifact
       uses: actions/download-artifact@v2
       with:
-        name: rust-app
-        path: target/x86_64-pc-windows-gnu/release
+        name: rust-app-${{ matrix.target }}
+        path: dist/
 
     - name: Get current date
       id: get_date
@@ -64,12 +91,15 @@ jobs:
         draft: false
         prerelease: false
 
-    - name: Upload exe to release
+    - name: Upload artifacts to release
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: target/x86_64-pc-windows-gnu/release/ml2pdf.exe
-        asset_name: ml2pdf.exe
+        asset_path: dist/ml2pdf-${{ matrix.target }}.*
+        asset_name: ml2pdf-${{ matrix.target }}.${{ matrix.archive }}
         asset_content_type: application/octet-stream
+
+    - name: Clean up artifacts
+      run: rm -rf dist/
