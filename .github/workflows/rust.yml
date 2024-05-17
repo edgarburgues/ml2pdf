@@ -20,7 +20,7 @@ jobs:
           - target: x86_64-pc-windows-gnu
             archive: zip
           - target: x86_64-unknown-linux-musl
-            archive: tar.gz tar.xz tar.zst
+            archive: tar.gz
           - target: x86_64-apple-darwin
             archive: zip
 
@@ -56,8 +56,6 @@ jobs:
         else
           tar -czvf dist/ml2pdf-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release ml2pdf*
         fi
-      with:
-        working-directory: .
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2
@@ -97,7 +95,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: dist/ml2pdf-${{ matrix.target }}.*
+        asset_path: dist/ml2pdf-${{ matrix.target }}.${{ matrix.archive }}
         asset_name: ml2pdf-${{ matrix.target }}.${{ matrix.archive }}
         asset_content_type: application/octet-stream
 
